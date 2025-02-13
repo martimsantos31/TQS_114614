@@ -1,0 +1,110 @@
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import pt.ua.deti.tqs.TqsStack;
+
+import java.util.NoSuchElementException;
+
+import static java.lang.invoke.MethodHandles.lookup;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.slf4j.LoggerFactory.getLogger;
+
+public class TqsStackTest {
+
+    static final Logger log = getLogger(lookup().lookupClass());
+
+    @BeforeEach
+    void setup(){
+
+    }
+
+    @Test
+    void testStackIsEmptyOnConstruction(){
+        log.debug("Testing stack is empty on construction");
+
+        TqsStack<Integer> stack = new TqsStack<>(2);
+        assertTrue(stack.isEmpty());
+    }
+
+    @Test
+    void testStackSizeZeroOnConstruction(){
+        log.debug("Testing stack size is zero on construction");
+
+        TqsStack<Integer> stack = new TqsStack<>(2);
+        assertEquals(0, stack.size());
+    }
+
+    @Test
+    void testStackPush(){
+        log.debug("Testing stack push");
+
+        TqsStack<Integer> stack = new TqsStack<>(15);
+
+        for (int i = 0; i < 10; i++) {
+            stack.push(i);
+        }
+
+        assertEquals(10, stack.size());
+    }
+
+    @Test
+    void testStackPop(){
+        log.debug("Testing stack pop");
+
+        TqsStack<Integer> stack = new TqsStack<>(2);
+
+        stack.push(1);
+
+        assertEquals(1, stack.pop());
+        assertEquals(0, stack.size());
+    }
+
+    @Test
+    void testStackPeek(){
+        log.debug("Testing stack peek");
+
+        TqsStack<Integer> stack = new TqsStack<>(2);
+
+        stack.push(1);
+
+        assertEquals(1, stack.peek());
+        assertEquals(1, stack.size());
+    }
+
+    @Test
+    void testPoppingUntilEmpty(){
+        log.debug("Testing some pop operations and assert size");
+
+        TqsStack<Integer> stack = new TqsStack<>(10);
+
+        for (int i = 0; i < 10; i++) {
+            stack.push(i);
+        }
+
+        for (int i = 9; i >= 0; i--) {
+            stack.pop();
+        }
+
+        assertEquals(0, stack.size());
+    }
+
+    @Test
+    void testPopOnEmptyStackThrowsException() {
+        TqsStack<Integer> stack = new TqsStack<>(2);
+        assertThrows(NoSuchElementException.class, stack::pop);
+    }
+
+    @Test
+    void testPeekOnEmptyStackThrowsException() {
+        TqsStack<Integer> stack = new TqsStack<>(2);
+        assertThrows(NoSuchElementException.class, stack::peek);
+    }
+
+    @Test
+    void testPushOnFullBoundedStackThrowsException() {
+        TqsStack<Integer> stack = new TqsStack<>(2);
+        stack.push(1);
+        stack.push(2);
+        assertThrows(IllegalStateException.class, () -> stack.push(3));
+    }
+}
