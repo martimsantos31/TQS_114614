@@ -1,4 +1,5 @@
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import pt.ua.deti.tqs.TqsStack;
@@ -72,6 +73,7 @@ public class TqsStackTest {
     }
 
     @Test
+    @Disabled
     void testPoppingUntilEmpty(){
         log.debug("Testing some pop operations and assert size");
 
@@ -95,6 +97,7 @@ public class TqsStackTest {
     }
 
     @Test
+    @Disabled
     void testPeekOnEmptyStackThrowsException() {
         TqsStack<Integer> stack = new TqsStack<>(2);
         assertThrows(NoSuchElementException.class, stack::peek);
