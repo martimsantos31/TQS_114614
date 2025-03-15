@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class Lab32CarsApplication {
 
     public static void main(String[] args) {
+
         SpringApplication.run(Lab32CarsApplication.class, args);
     }
 
