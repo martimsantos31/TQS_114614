@@ -41,10 +41,6 @@ public class Calculator {
             } else if (arg.equals("*")) {
                 val = x.doubleValue() * y.doubleValue();
             } else if (arg.equals("/")) {
-                if (y.doubleValue() == 0) {
-                    errorMessage = "error";
-                    return;
-                }
                 val = x.doubleValue() / y.doubleValue();
             }
             push(val);

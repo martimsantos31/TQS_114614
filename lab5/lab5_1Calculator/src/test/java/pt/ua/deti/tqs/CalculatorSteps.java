@@ -68,6 +68,7 @@ public class CalculatorSteps {
         calc.push("/");
     }
 
+
     @Then("the result is {double}")
     public void the_result_is(double expected) {
         Number value = calc.value();
