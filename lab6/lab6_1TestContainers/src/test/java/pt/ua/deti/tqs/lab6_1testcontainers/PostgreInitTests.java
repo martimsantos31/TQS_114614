@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @Testcontainers
 @SpringBootTest
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class) // Define ordem dos testes
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class PostgreInitTests {
 
     @Container
