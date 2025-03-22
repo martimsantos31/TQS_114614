@@ -1,10 +1,14 @@
+package pt.ua.deti.tqs.lab6_1testcontainers.entity;
+
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "customers")
 public class Customer {
+
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long customerId;
+    private Long id;
     private String name;
     private String email;
     private String address;
@@ -13,20 +17,21 @@ public class Customer {
     public Customer() {
     }
 
-    public Customer(Long customerId, String name, String email, String address, String phone) {
-        this.customerId = customerId;
+    public Customer(Long id, String name, String email, String address, String phone) {
+        this.id = id;
         this.name = name;
         this.email = email;
         this.address = address;
         this.phone = phone;
     }
 
-    public Long getCustomerId() {
-        return customerId;
+
+    public Long getId() {
+        return id;
     }
 
-    public void setCustomerId(Long customerId) {
-        this.customerId = customerId;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -60,5 +65,7 @@ public class Customer {
     public void setPhone(String phone) {
         this.phone = phone;
     }
+
+
 
 }
