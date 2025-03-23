@@ -1,4 +1,4 @@
-package pt.ua.deti.tqs.lab6_4carsassured;
+package pt.ua.deti.tqs.lab3_2cars;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,8 +11,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
-import pt.ua.deti.tqs.lab6_4carsassured.model.Car;
-import pt.ua.deti.tqs.lab6_4carsassured.repository.CarRepository;
+import pt.ua.deti.tqs.lab3_2cars.entities.Car;
+import pt.ua.deti.tqs.lab3_2cars.repositorys.CarRepository;
 
 import java.util.List;
 

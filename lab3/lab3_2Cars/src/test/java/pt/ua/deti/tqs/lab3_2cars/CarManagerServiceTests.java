@@ -1,4 +1,4 @@
-package pt.ua.deti.tqs.lab6_4carsassured;
+package pt.ua.deti.tqs.lab3_2cars;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -6,9 +6,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import pt.ua.deti.tqs.lab6_4carsassured.model.Car;
-import pt.ua.deti.tqs.lab6_4carsassured.repository.CarRepository;
-import pt.ua.deti.tqs.lab6_4carsassured.service.CarManagerService;
+import pt.ua.deti.tqs.lab3_2cars.entities.Car;
+import pt.ua.deti.tqs.lab3_2cars.repositorys.CarRepository;
+import pt.ua.deti.tqs.lab3_2cars.services.CarManagerService;
 
 import java.util.Arrays;
 import java.util.List;

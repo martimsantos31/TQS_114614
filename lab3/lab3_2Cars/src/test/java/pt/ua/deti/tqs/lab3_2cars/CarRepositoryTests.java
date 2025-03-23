@@ -1,10 +1,10 @@
-package pt.ua.deti.tqs.lab6_4carsassured;
+package pt.ua.deti.tqs.lab3_2cars;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import pt.ua.deti.tqs.lab6_4carsassured.model.Car;
-import pt.ua.deti.tqs.lab6_4carsassured.repository.CarRepository;
+import pt.ua.deti.tqs.lab3_2cars.entities.Car;
+import pt.ua.deti.tqs.lab3_2cars.repositorys.CarRepository;
 import java.util.List;
 import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;

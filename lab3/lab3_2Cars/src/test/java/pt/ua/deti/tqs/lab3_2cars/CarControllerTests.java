@@ -1,4 +1,4 @@
-package pt.ua.deti.tqs.lab6_4carsassured;
+package pt.ua.deti.tqs.lab3_2cars;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -7,8 +7,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
-import pt.ua.deti.tqs.lab6_4carsassured.model.Car;
-import pt.ua.deti.tqs.lab6_4carsassured.service.CarManagerService;
+import pt.ua.deti.tqs.lab3_2cars.entities.Car;
+import pt.ua.deti.tqs.lab3_2cars.services.CarManagerService;
 
 import java.util.Arrays;
 import java.util.List;
