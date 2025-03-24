@@ -9,7 +9,7 @@ import java.util.Objects;
 @Table(name = "cars")
 public class Car {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long carId;
     private String maker;
     private String model;

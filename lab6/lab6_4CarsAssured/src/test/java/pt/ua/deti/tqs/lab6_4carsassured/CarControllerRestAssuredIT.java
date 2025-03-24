@@ -45,4 +45,16 @@ public class CarControllerRestAssuredIT {
                 .body("$.size()", is(2));
     }
 
+    @Test
+    void whenGetCarById_thenReturnCar() {
+        RestAssuredMockMvc.given()
+                .mockMvc(mockMvc)
+                .when()
+                .get("/cars/1")
+                .then()
+                .statusCode(200)
+                .body("maker", is("Toyota"))
+                .body("model", is("Corolla"));
+    }
+
 }

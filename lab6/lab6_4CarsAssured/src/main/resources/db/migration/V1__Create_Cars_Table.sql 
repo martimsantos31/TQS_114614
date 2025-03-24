@@ -1,0 +1,7 @@
+CREATE TABLE cars (
+    car_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    maker VARCHAR(255),
+    model VARCHAR(255),
+    engine_type VARCHAR(255),
+    segment VARCHAR(255)
+);
