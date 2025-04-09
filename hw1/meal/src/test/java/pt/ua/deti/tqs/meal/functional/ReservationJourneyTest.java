@@ -9,8 +9,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,17 +33,17 @@ public class ReservationJourneyTest {
 
     @BeforeAll
     static void setupClass() {
-        WebDriverManager.chromedriver().setup();
+        WebDriverManager.firefoxdriver().setup();
     }
 
     @BeforeEach
     void setUp() {
-        ChromeOptions options = new ChromeOptions();
+        FirefoxOptions options = new FirefoxOptions();
         options.addArguments("--headless");
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
         
-        driver = new ChromeDriver(options);
+        driver = new FirefoxDriver(options);
         wait = new WebDriverWait(driver, Duration.ofSeconds(10));
     }
 
@@ -64,13 +64,13 @@ public class ReservationJourneyTest {
         
         // Verify restaurants are loaded (wait for the first restaurant to appear)
         WebElement firstRestaurant = wait.until(
-            ExpectedConditions.presenceOfElementLocated(By.cssSelector(".restaurant-card"))
+            ExpectedConditions.presenceOfElementLocated(By.cssSelector(".restaurant"))
         );
         assertThat(firstRestaurant).isNotNull();
         
         // Verify restaurant has a name and description
-        WebElement restaurantName = firstRestaurant.findElement(By.cssSelector(".restaurant-name"));
-        WebElement restaurantDescription = firstRestaurant.findElement(By.cssSelector(".restaurant-description"));
+        WebElement restaurantName = firstRestaurant.findElement(By.cssSelector("h3"));
+        WebElement restaurantDescription = firstRestaurant.findElement(By.cssSelector("p.description"));
         
         assertThat(restaurantName.getText()).isNotBlank();
         assertThat(restaurantDescription.getText()).isNotBlank();
@@ -83,19 +83,19 @@ public class ReservationJourneyTest {
         
         // Wait for restaurants to load
         WebElement firstRestaurant = wait.until(
-            ExpectedConditions.presenceOfElementLocated(By.cssSelector(".restaurant-card"))
+            ExpectedConditions.presenceOfElementLocated(By.cssSelector(".restaurant"))
         );
         
         // Click on the first restaurant to view details
-        WebElement viewDetailsButton = firstRestaurant.findElement(By.cssSelector(".view-details-btn"));
+        WebElement viewDetailsButton = firstRestaurant.findElement(By.cssSelector("a.btn-primary"));
         viewDetailsButton.click();
         
         // Verify we're on the restaurant details page
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(".restaurant-details")));
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(".restaurant-header")));
         
         // Verify meals are displayed
         WebElement mealsList = wait.until(
-            ExpectedConditions.presenceOfElementLocated(By.cssSelector(".meals-list"))
+            ExpectedConditions.presenceOfElementLocated(By.cssSelector(".meals-container"))
         );
         assertThat(mealsList).isNotNull();
         
@@ -111,9 +111,9 @@ public class ReservationJourneyTest {
         
         // Wait for restaurants to load and click on the first one
         WebElement firstRestaurant = wait.until(
-            ExpectedConditions.presenceOfElementLocated(By.cssSelector(".restaurant-card"))
+            ExpectedConditions.presenceOfElementLocated(By.cssSelector(".restaurant"))
         );
-        firstRestaurant.findElement(By.cssSelector(".view-details-btn")).click();
+        firstRestaurant.findElement(By.cssSelector("a.btn-primary")).click();
         
         // On the restaurant details page, wait for meals to load
         WebElement firstMeal = wait.until(
@@ -121,17 +121,17 @@ public class ReservationJourneyTest {
         );
         
         // Click the "Book Now" button on the first meal
-        WebElement bookButton = firstMeal.findElement(By.cssSelector(".book-now-btn"));
+        WebElement bookButton = firstMeal.findElement(By.cssSelector(".btn-book"));
         bookButton.click();
         
         // Wait for the reservation confirmation
         WebElement reservationConfirmation = wait.until(
-            ExpectedConditions.presenceOfElementLocated(By.cssSelector(".reservation-confirmation"))
+            ExpectedConditions.presenceOfElementLocated(By.cssSelector(".reservation-success"))
         );
         assertThat(reservationConfirmation).isNotNull();
         
         // Verify the reservation token is displayed
-        WebElement reservationToken = reservationConfirmation.findElement(By.cssSelector(".reservation-token"));
+        WebElement reservationToken = reservationConfirmation.findElement(By.cssSelector(".token"));
         assertThat(reservationToken.getText()).isNotBlank();
     }
 } 

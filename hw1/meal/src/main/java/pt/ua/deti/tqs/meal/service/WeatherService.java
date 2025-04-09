@@ -66,7 +66,7 @@ public class WeatherService {
      * @param date Date to generate forecast for
      * @return Mock forecast
      */
-    private WeatherForecast generateMockForecast(LocalDate date) {
+    public WeatherForecast generateMockForecast(LocalDate date) {
         // Mock data - in a real application this would come from an API
         int dayOfMonth = date.getDayOfMonth();
         
@@ -100,13 +100,33 @@ public class WeatherService {
     }
     
     /**
+     * Get the number of cache hits
+     * @return Number of cache hits
+     */
+    public int getHits() {
+        return hits.get();
+    }
+    
+    /**
+     * Get the number of cache misses
+     * @return Number of cache misses
+     */
+    public int getMisses() {
+        return misses.get();
+    }
+    
+    /**
      * Weather forecast data class
      */
     public static class WeatherForecast {
         private String description;
-        private double minTemperature;
-        private double maxTemperature;
+        private Double minTemperature;
+        private Double maxTemperature;
         private String precipitationProbability;
+        
+        public WeatherForecast() {
+            // Default constructor for builder
+        }
         
         public WeatherForecast(String description, double minTemperature, 
                               double maxTemperature, String precipitationProbability) {
@@ -120,11 +140,11 @@ public class WeatherService {
             return description;
         }
         
-        public double getMinTemperature() {
+        public Double getMinTemperature() {
             return minTemperature;
         }
         
-        public double getMaxTemperature() {
+        public Double getMaxTemperature() {
             return maxTemperature;
         }
         
@@ -135,6 +155,40 @@ public class WeatherService {
         // For backward compatibility
         public double getTemperature() {
             return (minTemperature + maxTemperature) / 2;
+        }
+        
+        // Builder method
+        public static Builder builder() {
+            return new Builder();
+        }
+        
+        // Builder class
+        public static class Builder {
+            private final WeatherForecast forecast = new WeatherForecast();
+            
+            public Builder description(String description) {
+                forecast.description = description;
+                return this;
+            }
+            
+            public Builder minTemperature(Double minTemperature) {
+                forecast.minTemperature = minTemperature;
+                return this;
+            }
+            
+            public Builder maxTemperature(Double maxTemperature) {
+                forecast.maxTemperature = maxTemperature;
+                return this;
+            }
+            
+            public Builder precipitationProbability(String precipitationProbability) {
+                forecast.precipitationProbability = precipitationProbability;
+                return this;
+            }
+            
+            public WeatherForecast build() {
+                return forecast;
+            }
         }
     }
 } 

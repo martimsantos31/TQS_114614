@@ -3,15 +3,18 @@ package pt.ua.deti.tqs.meal.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.stereotype.Service;
 import pt.ua.deti.tqs.meal.domain.Meal;
 import pt.ua.deti.tqs.meal.domain.Reservation;
+import pt.ua.deti.tqs.meal.exception.ResourceNotFoundException;
 import pt.ua.deti.tqs.meal.repository.MealRepository;
 import pt.ua.deti.tqs.meal.repository.ReservationRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -30,17 +33,14 @@ public class ReservationService {
      * @param mealId The meal ID to reserve
      * @return The created reservation with token
      */
-    public Optional<Reservation> createReservation(Long mealId) {
+    public Reservation createReservation(Long mealId) {
         logger.info("Creating reservation for meal ID: {}", mealId);
         
-        Optional<Meal> meal = mealRepository.findById(mealId);
-        if (meal.isEmpty()) {
-            logger.warn("Meal with ID {} not found", mealId);
-            return Optional.empty();
-        }
+        Meal meal = mealRepository.findById(mealId)
+            .orElseThrow(() -> new ResourceNotFoundException("Meal not found with id: " + mealId));
 
         Reservation reservation = new Reservation();
-        reservation.setMeal(meal.get());
+        reservation.setMeal(meal);
         reservation.setToken(generateToken());
         reservation.setCreatedAt(LocalDateTime.now());
         reservation.setUsed(false);
@@ -48,27 +48,31 @@ public class ReservationService {
         Reservation savedReservation = reservationRepository.save(reservation);
         logger.info("Created reservation with ID {} and token {}", savedReservation.getId(), savedReservation.getToken());
         
-        return Optional.of(savedReservation);
+        // Clear the active reservations cache since we added a new one
+        return savedReservation;
     }
 
     /**
      * Get reservation details by token
      * @param token The reservation token
-     * @return Optional containing the reservation if found
+     * @return The reservation if found
+     * @throws ResourceNotFoundException if not found
      */
-    public Optional<Reservation> getReservationByToken(String token) {
+    @Cacheable(value = "reservationsByToken", key = "#token")
+    public Reservation getReservationByToken(String token) {
         logger.info("Finding reservation with token: {}", token);
-        return reservationRepository.findByToken(token);
+        return reservationRepository.findByToken(token)
+            .orElseThrow(() -> new ResourceNotFoundException("Reservation not found with token: " + token));
     }
 
     /**
-     * Get reservation details by code
-     * @param code The reservation code
-     * @return Optional containing the reservation if found
+     * Get all active (non-used) reservations
+     * @return List of all active reservations
      */
-    public Optional<Reservation> getReservationByCode(String code) {
-        logger.info("Finding reservation with code: {}", code);
-        return reservationRepository.findByToken(code);
+    @Cacheable(value = "activeReservations")
+    public List<Reservation> getActiveReservations() {
+        logger.info("Finding all active reservations");
+        return reservationRepository.findByUsed(false);
     }
 
     /**
@@ -76,6 +80,7 @@ public class ReservationService {
      * @param restaurantId The restaurant ID
      * @return List of active reservations
      */
+    @Cacheable(value = "activeReservationsByRestaurant", key = "#restaurantId")
     public List<Reservation> getActiveReservationsForRestaurant(Long restaurantId) {
         logger.info("Finding active reservations for restaurant ID: {}", restaurantId);
         
@@ -92,52 +97,51 @@ public class ReservationService {
     /**
      * Mark a reservation as used (when a user checks in)
      * @param token The reservation token
-     * @return Optional containing the updated reservation if successful
+     * @return The updated reservation
+     * @throws ResourceNotFoundException if not found
      */
-    public Optional<Reservation> markReservationAsUsed(String token) {
+    @CachePut(value = "reservationsByToken", key = "#token")
+    @CacheEvict(value = {"activeReservations", "activeReservationsByRestaurant"}, allEntries = true)
+    public Reservation markReservationAsUsed(String token) {
         logger.info("Marking reservation with token {} as used", token);
         
-        Optional<Reservation> reservation = reservationRepository.findByToken(token);
-        if (reservation.isEmpty()) {
-            logger.warn("Reservation with token {} not found", token);
-            return Optional.empty();
-        }
+        Reservation reservation = reservationRepository.findByToken(token)
+            .orElseThrow(() -> new ResourceNotFoundException("Reservation not found with token: " + token));
         
-        if (reservation.get().isUsed()) {
+        if (reservation.isUsed()) {
             logger.warn("Reservation with token {} has already been used", token);
-            return Optional.empty();
+            throw new IllegalStateException("Reservation has already been used");
         }
         
-        Reservation r = reservation.get();
-        r.setUsed(true);
-        Reservation updatedReservation = reservationRepository.save(r);
+        reservation.setUsed(true);
+        Reservation updatedReservation = reservationRepository.save(reservation);
         
         logger.info("Reservation with token {} marked as used", token);
-        return Optional.of(updatedReservation);
+        return updatedReservation;
     }
     
     /**
      * Delete a reservation by token
      * @param token The reservation token
-     * @return true if deletion was successful, false if the reservation was not found or already used
+     * @return true if deletion was successful
+     * @throws ResourceNotFoundException if not found
+     * @throws IllegalStateException if already used
      */
+    @CacheEvict(value = {"reservationsByToken", "activeReservations", "activeReservationsByRestaurant"}, allEntries = true)
     public boolean deleteReservation(String token) {
         logger.info("Deleting reservation with token: {}", token);
         
-        Optional<Reservation> reservation = reservationRepository.findByToken(token);
-        if (reservation.isEmpty()) {
-            logger.warn("Reservation with token {} not found", token);
-            return false;
-        }
+        Reservation reservation = reservationRepository.findByToken(token)
+            .orElseThrow(() -> new ResourceNotFoundException("Reservation not found with token: " + token));
         
         // Do not allow deletion of used reservations
-        if (reservation.get().isUsed()) {
+        if (reservation.isUsed()) {
             logger.warn("Cannot delete reservation with token {} as it has already been used", token);
-            return false;
+            throw new IllegalStateException("Cannot delete a used reservation");
         }
         
         // Delete the reservation
-        reservationRepository.delete(reservation.get());
+        reservationRepository.delete(reservation);
         logger.info("Reservation with token {} deleted successfully", token);
         return true;
     }

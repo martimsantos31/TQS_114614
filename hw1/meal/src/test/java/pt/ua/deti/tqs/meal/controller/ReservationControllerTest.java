@@ -9,19 +9,17 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import pt.ua.deti.tqs.meal.controller.dto.ReservationDto;
 import pt.ua.deti.tqs.meal.domain.Meal;
 import pt.ua.deti.tqs.meal.domain.Reservation;
 import pt.ua.deti.tqs.meal.domain.Restaurant;
+import pt.ua.deti.tqs.meal.exception.ResourceNotFoundException;
 import pt.ua.deti.tqs.meal.service.ReservationService;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 import static org.hamcrest.Matchers.is;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -67,7 +65,7 @@ public class ReservationControllerTest {
 
     @Test
     void whenGetReservation_thenReturnReservation() throws Exception {
-        when(reservationService.getReservationByToken("TEST123")).thenReturn(Optional.of(testReservation));
+        when(reservationService.getReservationByToken("TEST123")).thenReturn(testReservation);
 
         mockMvc.perform(get("/api/v1/reservations/TEST123")
                 .contentType(MediaType.APPLICATION_JSON))
@@ -78,7 +76,7 @@ public class ReservationControllerTest {
 
     @Test
     void whenGetNonExistentReservation_thenReturn404() throws Exception {
-        when(reservationService.getReservationByToken("INVALID")).thenReturn(Optional.empty());
+        when(reservationService.getReservationByToken("INVALID")).thenThrow(new ResourceNotFoundException("Reservation not found with token: INVALID"));
 
         mockMvc.perform(get("/api/v1/reservations/INVALID")
                 .contentType(MediaType.APPLICATION_JSON))
@@ -87,7 +85,7 @@ public class ReservationControllerTest {
 
     @Test
     void whenFindReservationByCode_thenReturnReservation() throws Exception {
-        when(reservationService.getReservationByCode("TEST123")).thenReturn(Optional.of(testReservation));
+        when(reservationService.getReservationByToken("TEST123")).thenReturn(testReservation);
 
         mockMvc.perform(get("/api/v1/reservations/code/TEST123")
                 .contentType(MediaType.APPLICATION_JSON))
@@ -98,7 +96,7 @@ public class ReservationControllerTest {
 
     @Test
     void whenFindReservationByInvalidCode_thenReturn404() throws Exception {
-        when(reservationService.getReservationByCode("INVALID")).thenReturn(Optional.empty());
+        when(reservationService.getReservationByToken("INVALID")).thenThrow(new ResourceNotFoundException("Reservation not found with token: INVALID"));
 
         mockMvc.perform(get("/api/v1/reservations/code/INVALID")
                 .contentType(MediaType.APPLICATION_JSON))
@@ -114,7 +112,7 @@ public class ReservationControllerTest {
         usedReservation.setCreatedAt(LocalDateTime.now());
         usedReservation.setUsed(true);
 
-        when(reservationService.markReservationAsUsed("TEST123")).thenReturn(Optional.of(usedReservation));
+        when(reservationService.markReservationAsUsed("TEST123")).thenReturn(usedReservation);
 
         mockMvc.perform(put("/api/v1/reservations/TEST123/use")
                 .contentType(MediaType.APPLICATION_JSON))
@@ -124,12 +122,12 @@ public class ReservationControllerTest {
     }
 
     @Test
-    void whenMarkNonExistentReservationAsUsed_thenReturn400() throws Exception {
-        when(reservationService.markReservationAsUsed("INVALID")).thenReturn(Optional.empty());
+    void whenMarkNonExistentReservationAsUsed_thenReturn404() throws Exception {
+        when(reservationService.markReservationAsUsed("INVALID")).thenThrow(new ResourceNotFoundException("Reservation not found with token: INVALID"));
 
         mockMvc.perform(put("/api/v1/reservations/INVALID/use")
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -141,7 +139,7 @@ public class ReservationControllerTest {
         usedReservation.setCreatedAt(LocalDateTime.now());
         usedReservation.setUsed(true);
 
-        when(reservationService.markReservationAsUsed("TEST123")).thenReturn(Optional.of(usedReservation));
+        when(reservationService.markReservationAsUsed("TEST123")).thenReturn(usedReservation);
 
         mockMvc.perform(put("/api/v1/reservations/code/TEST123/use")
                 .contentType(MediaType.APPLICATION_JSON))
@@ -160,17 +158,17 @@ public class ReservationControllerTest {
     }
 
     @Test
-    void whenCancelNonExistentReservation_thenReturn400() throws Exception {
-        when(reservationService.deleteReservation("INVALID")).thenReturn(false);
+    void whenCancelNonExistentReservation_thenReturn404() throws Exception {
+        when(reservationService.deleteReservation("INVALID")).thenThrow(new ResourceNotFoundException("Reservation not found with token: INVALID"));
 
         mockMvc.perform(delete("/api/v1/reservations/INVALID")
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     @Test
     void whenCreateReservation_thenReturnNewReservation() throws Exception {
-        when(reservationService.createReservation(1L)).thenReturn(Optional.of(testReservation));
+        when(reservationService.createReservation(1L)).thenReturn(testReservation);
 
         mockMvc.perform(post("/api/v1/reservations?mealId=1")
                 .contentType(MediaType.APPLICATION_JSON))
@@ -180,11 +178,11 @@ public class ReservationControllerTest {
     }
 
     @Test
-    void whenCreateReservationWithInvalidMeal_thenReturn400() throws Exception {
-        when(reservationService.createReservation(999L)).thenReturn(Optional.empty());
+    void whenCreateReservationWithInvalidMeal_thenReturn404() throws Exception {
+        when(reservationService.createReservation(999L)).thenThrow(new ResourceNotFoundException("Meal not found with id: 999"));
 
         mockMvc.perform(post("/api/v1/reservations?mealId=999")
                 .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 } 

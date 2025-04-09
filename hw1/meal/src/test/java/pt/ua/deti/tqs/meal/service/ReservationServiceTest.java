@@ -9,9 +9,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import pt.ua.deti.tqs.meal.domain.Meal;
 import pt.ua.deti.tqs.meal.domain.Reservation;
 import pt.ua.deti.tqs.meal.domain.Restaurant;
+import pt.ua.deti.tqs.meal.exception.ResourceNotFoundException;
 import pt.ua.deti.tqs.meal.repository.MealRepository;
 import pt.ua.deti.tqs.meal.repository.ReservationRepository;
-import pt.ua.deti.tqs.meal.exception.ResourceNotFoundException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -22,7 +22,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)

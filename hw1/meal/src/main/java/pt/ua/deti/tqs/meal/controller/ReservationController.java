@@ -7,10 +7,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pt.ua.deti.tqs.meal.controller.dto.ReservationDto;
 import pt.ua.deti.tqs.meal.domain.Reservation;
+import pt.ua.deti.tqs.meal.exception.ResourceNotFoundException;
 import pt.ua.deti.tqs.meal.service.ReservationService;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -31,12 +31,13 @@ public class ReservationController {
     public ResponseEntity<?> createReservation(@RequestParam Long mealId) {
         logger.info("Request to create reservation for meal ID: {}", mealId);
         
-        Optional<Reservation> reservation = reservationService.createReservation(mealId);
-        
-        if (reservation.isPresent()) {
-            return ResponseEntity.ok(new ReservationDto(reservation.get()));
-        } else {
-            return ResponseEntity.badRequest().body("Meal not found or not available");
+        try {
+            Reservation reservation = reservationService.createReservation(mealId);
+            return ResponseEntity.ok(new ReservationDto(reservation));
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error creating reservation: " + e.getMessage());
         }
     }
     
@@ -49,11 +50,10 @@ public class ReservationController {
     public ResponseEntity<?> getReservation(@PathVariable String token) {
         logger.info("Request to get reservation with token: {}", token);
         
-        Optional<Reservation> reservation = reservationService.getReservationByToken(token);
-        
-        if (reservation.isPresent()) {
-            return ResponseEntity.ok(new ReservationDto(reservation.get()));
-        } else {
+        try {
+            Reservation reservation = reservationService.getReservationByToken(token);
+            return ResponseEntity.ok(new ReservationDto(reservation));
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
     }
@@ -67,11 +67,10 @@ public class ReservationController {
     public ResponseEntity<?> findReservationByCode(@PathVariable String code) {
         logger.info("Request to find reservation with code: {}", code);
         
-        Optional<Reservation> reservation = reservationService.getReservationByCode(code);
-        
-        if (reservation.isPresent()) {
-            return ResponseEntity.ok(new ReservationDto(reservation.get()));
-        } else {
+        try {
+            Reservation reservation = reservationService.getReservationByToken(code);
+            return ResponseEntity.ok(new ReservationDto(reservation));
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
     }
@@ -85,12 +84,13 @@ public class ReservationController {
     public ResponseEntity<?> useReservation(@PathVariable String token) {
         logger.info("Request to mark reservation with token {} as used", token);
         
-        Optional<Reservation> updatedReservation = reservationService.markReservationAsUsed(token);
-        
-        if (updatedReservation.isPresent()) {
-            return ResponseEntity.ok(new ReservationDto(updatedReservation.get()));
-        } else {
-            return ResponseEntity.badRequest().body("Reservation not found or already used");
+        try {
+            Reservation updatedReservation = reservationService.markReservationAsUsed(token);
+            return ResponseEntity.ok(new ReservationDto(updatedReservation));
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body("Reservation already used");
         }
     }
     
@@ -104,12 +104,13 @@ public class ReservationController {
     public ResponseEntity<?> useReservationByCode(@PathVariable String code) {
         logger.info("Request to mark reservation with code {} as used", code);
         
-        Optional<Reservation> updatedReservation = reservationService.markReservationAsUsed(code);
-        
-        if (updatedReservation.isPresent()) {
-            return ResponseEntity.ok(new ReservationDto(updatedReservation.get()));
-        } else {
-            return ResponseEntity.badRequest().body("Reservation not found or already used");
+        try {
+            Reservation updatedReservation = reservationService.markReservationAsUsed(code);
+            return ResponseEntity.ok(new ReservationDto(updatedReservation));
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body("Reservation already used");
         }
     }
     
@@ -122,12 +123,13 @@ public class ReservationController {
     public ResponseEntity<?> cancelReservation(@PathVariable String token) {
         logger.info("Request to cancel reservation with token: {}", token);
         
-        boolean deleted = reservationService.deleteReservation(token);
-        
-        if (deleted) {
+        try {
+            boolean deleted = reservationService.deleteReservation(token);
             return ResponseEntity.ok().body("Reservation successfully cancelled");
-        } else {
-            return ResponseEntity.badRequest().body("Reservation not found or already used");
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body("Reservation already used");
         }
     }
 }

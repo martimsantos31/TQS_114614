@@ -24,7 +24,6 @@ import pt.ua.deti.tqs.meal.repository.RestaurantRepository;
 import pt.ua.deti.tqs.meal.repository.ReservationRepository;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -111,6 +110,15 @@ public class PostgresIntegrationTest {
         assertThat(getResponse.getBody()).isNotNull();
         assertThat(getResponse.getBody().getToken()).isEqualTo(token);
         assertThat(getResponse.getBody().isUsed()).isFalse();
+        
+        // Test getting reservation by code too
+        String getByCodeUrl = "http://localhost:" + port + "/api/v1/reservations/code/" + token;
+        ResponseEntity<ReservationDto> getByCodeResponse = restTemplate.getForEntity(getByCodeUrl, ReservationDto.class);
+        
+        // Verify code-based retrieval was successful
+        assertThat(getByCodeResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(getByCodeResponse.getBody()).isNotNull();
+        assertThat(getByCodeResponse.getBody().getToken()).isEqualTo(token);
     }
     
     @Test
@@ -133,6 +141,20 @@ public class PostgresIntegrationTest {
         assertThat(useResponse.getBody()).isNotNull();
         assertThat(useResponse.getBody().getToken()).isEqualTo(token);
         assertThat(useResponse.getBody().isUsed()).isTrue();
+        
+        // Test using code endpoint too
+        // Create a new reservation
+        ResponseEntity<ReservationDto> createResponse2 = restTemplate.postForEntity(url, null, ReservationDto.class);
+        String token2 = createResponse2.getBody().getToken();
+        
+        // Mark reservation as used via code endpoint
+        String useByCodeUrl = "http://localhost:" + port + "/api/v1/reservations/code/" + token2 + "/use";
+        ResponseEntity<ReservationDto> useByCodeResponse = restTemplate.exchange(
+            useByCodeUrl, HttpMethod.PUT, HttpEntity.EMPTY, ReservationDto.class);
+        
+        // Verify the reservation was marked as used
+        assertThat(useByCodeResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(useByCodeResponse.getBody().isUsed()).isTrue();
     }
     
     @Test
@@ -187,6 +209,9 @@ public class PostgresIntegrationTest {
         // Second call should hit the cache
         restTemplate.getForEntity(url, Object[].class);
         
+        // Third call should hit the cache again
+        restTemplate.getForEntity(url, Object[].class);
+        
         // Check cache statistics
         String statsUrl = "http://localhost:" + port + "/api/v1/metrics/cache";
         ResponseEntity<Map> statsResponse = restTemplate.getForEntity(statsUrl, Map.class);
@@ -194,6 +219,44 @@ public class PostgresIntegrationTest {
         // Verify the cache statistics are available
         assertThat(statsResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(statsResponse.getBody()).isNotNull();
-        // Note: Details of cache stats checks would depend on exact cache implementation
+        
+        // Verify specific cache statistics
+        Map<String, Object> stats = statsResponse.getBody();
+        // Check that we have some stats in the response
+        assertThat(stats).containsKey("restaurantServiceFindAll");
+        
+        Map<String, Object> restaurantStats = (Map<String, Object>) stats.get("restaurantServiceFindAll");
+        assertThat(restaurantStats).containsKey("hits");
+        assertThat(restaurantStats).containsKey("misses");
+        
+        // Verify we have at least 2 hits (from our 3 calls, with first being a miss)
+        Number hitCount = (Number) restaurantStats.get("hits");
+        assertThat(hitCount.intValue()).isGreaterThanOrEqualTo(2);
+    }
+    
+    @Test
+    void testNonExistentResourceHandling() {
+        // Try to get a non-existent reservation
+        String nonExistentToken = "NON_EXISTENT_TOKEN";
+        String getUrl = "http://localhost:" + port + "/api/v1/reservations/" + nonExistentToken;
+        ResponseEntity<String> getResponse = restTemplate.getForEntity(getUrl, String.class);
+        
+        // Verify proper 404 handling
+        assertThat(getResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        
+        // Try to mark a non-existent reservation as used
+        String useUrl = "http://localhost:" + port + "/api/v1/reservations/" + nonExistentToken + "/use";
+        ResponseEntity<String> useResponse = restTemplate.exchange(
+            useUrl, HttpMethod.PUT, HttpEntity.EMPTY, String.class);
+        
+        // Verify proper 404 handling
+        assertThat(useResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        
+        // Try to create a reservation with non-existent meal
+        String createUrl = "http://localhost:" + port + "/api/v1/reservations?mealId=9999";
+        ResponseEntity<String> createResponse = restTemplate.postForEntity(createUrl, null, String.class);
+        
+        // Verify proper 404 handling
+        assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 } 

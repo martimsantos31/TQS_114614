@@ -8,11 +8,11 @@ import org.springframework.web.bind.annotation.*;
 import pt.ua.deti.tqs.meal.controller.dto.ReservationDto;
 import pt.ua.deti.tqs.meal.domain.Reservation;
 import pt.ua.deti.tqs.meal.domain.Restaurant;
+import pt.ua.deti.tqs.meal.exception.ResourceNotFoundException;
 import pt.ua.deti.tqs.meal.service.ReservationService;
 import pt.ua.deti.tqs.meal.service.RestaurantService;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -33,15 +33,17 @@ public class RestaurantController {
         return ResponseEntity.ok(restaurantService.getAllRestaurants());
     }
     
-
     @GetMapping("/{id}")
     public ResponseEntity<Restaurant> getRestaurantById(@PathVariable Long id) {
         logger.info("Request to get restaurant with ID: {}", id);
         
-        Optional<Restaurant> restaurant = restaurantService.getRestaurantById(id);
-        return restaurant
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        try {
+            Restaurant restaurant = restaurantService.getRestaurantById(id);
+            return ResponseEntity.ok(restaurant);
+        } catch (ResourceNotFoundException e) {
+            logger.warn("Restaurant not found with ID: {}", id);
+            return ResponseEntity.notFound().build();
+        }
     }
     
     /**
@@ -53,16 +55,19 @@ public class RestaurantController {
     public ResponseEntity<?> getActiveReservations(@PathVariable Long id) {
         logger.info("Request to get active reservations for restaurant with ID: {}", id);
         
-        Optional<Restaurant> restaurant = restaurantService.getRestaurantById(id);
-        if (restaurant.isEmpty()) {
+        try {
+            // Just check if the restaurant exists
+            restaurantService.getRestaurantById(id);
+            
+            List<Reservation> activeReservations = reservationService.getActiveReservationsForRestaurant(id);
+            List<ReservationDto> reservationDtos = activeReservations.stream()
+                    .map(ReservationDto::new)
+                    .collect(Collectors.toList());
+            
+            return ResponseEntity.ok(reservationDtos);
+        } catch (ResourceNotFoundException e) {
+            logger.warn("Restaurant not found with ID: {}", id);
             return ResponseEntity.notFound().build();
         }
-        
-        List<Reservation> activeReservations = reservationService.getActiveReservationsForRestaurant(id);
-        List<ReservationDto> reservationDtos = activeReservations.stream()
-                .map(ReservationDto::new)
-                .collect(Collectors.toList());
-        
-        return ResponseEntity.ok(reservationDtos);
     }
 } 
