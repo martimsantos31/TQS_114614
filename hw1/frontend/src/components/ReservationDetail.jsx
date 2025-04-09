@@ -171,7 +171,7 @@ const ReservationDetail = () => {
                 Keep Reservation
               </button>
               <button 
-                className={`btn btn-error ml-2 ${cancelStatus?.loading ? 'loading' : ''}`}
+                className={`btn btn-base-content ml-2 ${cancelStatus?.loading ? 'loading' : ''}`}
                 onClick={handleCancelReservation}
                 disabled={cancelStatus?.loading}
               >
@@ -260,7 +260,7 @@ const ReservationDetail = () => {
           <div className="card-actions justify-between mt-4">
             {!reservation.used && (
               <button 
-                className={`btn btn-error ${cancelStatus?.loading ? 'loading' : ''}`}
+                className={`btn btn-success ${cancelStatus?.loading ? 'loading' : ''}`}
                 onClick={() => setShowCancelConfirm(true)}
                 disabled={reservation.used || cancelStatus?.loading || cancelStatus?.success}
               >

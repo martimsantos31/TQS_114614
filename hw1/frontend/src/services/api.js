@@ -31,4 +31,20 @@ export const useReservation = (token) =>
 export const cancelReservation = (token) => 
   api.delete(`/api/v1/reservations/${token}`);
 
+// Staff-related API calls
+export const getActiveReservations = (restaurantId) => 
+  api.get(`/api/v1/restaurants/${restaurantId}/reservations/active`);
+export const findReservationByCode = (code) => {
+  // Normalize code to uppercase for consistency
+  const normalizedCode = code.toUpperCase();
+  console.log("Finding reservation with normalized code:", normalizedCode);
+  return api.get(`/api/v1/reservations/code/${normalizedCode}`);
+};
+export const markReservationAsUsed = (code) => {
+  // Normalize code to uppercase for consistency
+  const normalizedCode = code.toUpperCase();
+  console.log("API call to mark reservation as used:", normalizedCode);
+  return api.put(`/api/v1/reservations/code/${normalizedCode}/use`);
+};
+
 export default api; 

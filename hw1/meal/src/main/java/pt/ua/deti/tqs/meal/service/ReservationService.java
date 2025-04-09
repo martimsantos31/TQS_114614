@@ -10,8 +10,10 @@ import pt.ua.deti.tqs.meal.repository.MealRepository;
 import pt.ua.deti.tqs.meal.repository.ReservationRepository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class ReservationService {
@@ -57,6 +59,34 @@ public class ReservationService {
     public Optional<Reservation> getReservationByToken(String token) {
         logger.info("Finding reservation with token: {}", token);
         return reservationRepository.findByToken(token);
+    }
+
+    /**
+     * Get reservation details by code
+     * @param code The reservation code
+     * @return Optional containing the reservation if found
+     */
+    public Optional<Reservation> getReservationByCode(String code) {
+        logger.info("Finding reservation with code: {}", code);
+        return reservationRepository.findByToken(code);
+    }
+
+    /**
+     * Get all active (non-used) reservations for a restaurant
+     * @param restaurantId The restaurant ID
+     * @return List of active reservations
+     */
+    public List<Reservation> getActiveReservationsForRestaurant(Long restaurantId) {
+        logger.info("Finding active reservations for restaurant ID: {}", restaurantId);
+        
+        // Get all reservations where:
+        // 1. The reservation is not used
+        // 2. The meal belongs to the specified restaurant
+        List<Reservation> allReservations = reservationRepository.findByUsed(false);
+        
+        return allReservations.stream()
+                .filter(r -> r.getMeal().getRestaurant().getId().equals(restaurantId))
+                .collect(Collectors.toList());
     }
 
     /**
