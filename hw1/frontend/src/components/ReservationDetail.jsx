@@ -267,14 +267,7 @@ const ReservationDetail = () => {
                 Cancel Reservation
               </button>
             )}
-            
-            <button 
-              className={`btn btn-primary ${reservation.used ? 'btn-disabled' : ''} ${useStatus?.loading ? 'loading' : ''}`}
-              onClick={handleUseReservation}
-              disabled={reservation.used || useStatus?.loading || cancelStatus?.success}
-            >
-              {reservation.used ? 'Already Used' : 'Use Reservation'}
-            </button>
+          
           </div>
         </div>
       </div>
