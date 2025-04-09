@@ -10,7 +10,7 @@ public class Meal {
     private Long id;
     private String name;
     private String description;
-    private LocalDate date;
+    private LocalDate availableDate;
 
     @ManyToOne
     private Restaurant restaurant;
@@ -19,10 +19,10 @@ public class Meal {
         
     }
     
-    public Meal(String name, String description, LocalDate date, Restaurant restaurant) {
+    public Meal(String name, String description, LocalDate availableDate, Restaurant restaurant) {
         this.name = name;
         this.description = description;
-        this.date = date;
+        this.availableDate = availableDate;
         this.restaurant = restaurant;
     }
     
@@ -50,12 +50,12 @@ public class Meal {
         this.description = description;
     }
     
-    public LocalDate getDate() {
-        return date;
+    public LocalDate getAvailableDate() {
+        return availableDate;
     }
     
-    public void setDate(LocalDate date) {
-        this.date = date;
+    public void setAvailableDate(LocalDate availableDate) {
+        this.availableDate = availableDate;
     }
     
     public Restaurant getRestaurant() {

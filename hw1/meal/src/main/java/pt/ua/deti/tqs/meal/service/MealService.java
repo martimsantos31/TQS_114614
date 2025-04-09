@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class MealService {
@@ -28,7 +29,6 @@ public class MealService {
     public List<Meal> getMealsForRestaurant(Long restaurantId, int days) {
         logger.info("Finding meals for restaurant ID {} for the next {} days", restaurantId, days);
         
-       
         Optional<Restaurant> restaurant = restaurantRepository.findById(restaurantId);
         
         if (restaurant.isEmpty()) {
@@ -36,13 +36,21 @@ public class MealService {
             return new ArrayList<>();
         }
         
-    
+        LocalDate today = LocalDate.now();
+        LocalDate endDate = today.plusDays(days - 1);
+        
         List<Meal> allMeals = mealRepository.findAll();
         
         return allMeals.stream()
                 .filter(meal -> meal.getRestaurant() != null && 
                                meal.getRestaurant().getId().equals(restaurantId))
-                .toList();
+                .filter(meal -> {
+                    LocalDate mealDate = meal.getAvailableDate();
+                    return mealDate != null && 
+                           (mealDate.isEqual(today) || mealDate.isAfter(today)) && 
+                           (mealDate.isEqual(endDate) || mealDate.isBefore(endDate));
+                })
+                .collect(Collectors.toList());
     }
     
 

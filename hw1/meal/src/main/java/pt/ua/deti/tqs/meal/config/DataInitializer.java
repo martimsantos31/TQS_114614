@@ -27,9 +27,9 @@ public class DataInitializer implements CommandLineRunner {
         logger.info("Initializing sample data");
         
         // Create restaurants
-        Restaurant restaurant1 = new Restaurant("Tasca do Manel", "Aveiro, Portugal");
-        Restaurant restaurant2 = new Restaurant("Marisqueira Atlântico", "Costa Nova, Portugal");
-        Restaurant restaurant3 = new Restaurant("Pizzaria Bella Italia", "Aveiro, Portugal");
+        Restaurant restaurant1 = new Restaurant("Tasca do Manel", "Traditional Portuguese restaurant in Aveiro, Portugal");
+        Restaurant restaurant2 = new Restaurant("Marisqueira Atlântico", "Fresh seafood restaurant in Costa Nova, Portugal");
+        Restaurant restaurant3 = new Restaurant("Pizzaria Bella Italia", "Authentic Italian pizza in Aveiro, Portugal");
         
         restaurant1 = restaurantRepository.save(restaurant1);
         restaurant2 = restaurantRepository.save(restaurant2);
@@ -79,7 +79,7 @@ public class DataInitializer implements CommandLineRunner {
         Meal meal = new Meal();
         meal.setName(name);
         meal.setDescription(description);
-        meal.setDate(date);
+        meal.setAvailableDate(date);
         meal.setRestaurant(restaurant);
         return mealRepository.save(meal);
     }

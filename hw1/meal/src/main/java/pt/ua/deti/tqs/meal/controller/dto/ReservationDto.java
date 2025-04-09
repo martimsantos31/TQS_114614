@@ -11,6 +11,10 @@ public class ReservationDto {
     private Long mealId;
     private String mealName;
     private String restaurantName;
+    
+    // Default constructor for JSON deserialization
+    public ReservationDto() {
+    }
 
     public ReservationDto(Reservation reservation) {
         this.token = reservation.getToken();

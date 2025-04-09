@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/meals")
-@CrossOrigin(origins = "http://localhost:5473")
+@CrossOrigin(origins = "http://localhost:5173")
 public class MealController {
     private static final Logger logger = LoggerFactory.getLogger(MealController.class);
     
@@ -44,13 +44,13 @@ public class MealController {
         
         Map<LocalDate, WeatherForecast> forecastMap = weatherService.getForecastForDates(
                 meals.stream()
-                    .map(Meal::getDate)
+                    .map(Meal::getAvailableDate)
                     .collect(Collectors.toSet())
         );
 
     
         List<MealResponse> response = meals.stream()
-                .map(meal -> new MealResponse(meal, forecastMap.get(meal.getDate())))
+                .map(meal -> new MealResponse(meal, forecastMap.get(meal.getAvailableDate())))
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(response);

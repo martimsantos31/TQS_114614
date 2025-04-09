@@ -10,15 +10,15 @@ public class Restaurant {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
-    private String location;
+    private String description;
     
     public Restaurant() {
        
     }
     
-    public Restaurant(String name, String location) {
+    public Restaurant(String name, String description) {
         this.name = name;
-        this.location = location;
+        this.description = description;
     }
     
     public Long getId() {
@@ -37,11 +37,11 @@ public class Restaurant {
         this.name = name;
     }
     
-    public String getLocation() {
-        return location;
+    public String getDescription() {
+        return description;
     }
     
-    public void setLocation(String location) {
-        this.location = location;
+    public void setDescription(String description) {
+        this.description = description;
     }
 }
