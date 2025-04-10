@@ -1,26 +1,30 @@
 package pt.ua.deti.tqs.meal.functional;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.firefox.FirefoxDriver;
-import org.openqa.selenium.firefox.FirefoxOptions;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.time.Duration;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * API functional tests for the Reservation journey.
+ * 
+ * Note: These tests focus on the API functionality, not the frontend UI.
+ * Since the frontend is a separate application, we test the API endpoints
+ * that the frontend would call.
+ */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ReservationJourneyTest {
@@ -28,110 +32,172 @@ public class ReservationJourneyTest {
     @LocalServerPort
     private int port;
 
-    private WebDriver driver;
-    private WebDriverWait wait;
+    @Autowired
+    private TestRestTemplate restTemplate;
 
-    @BeforeAll
-    static void setupClass() {
-        WebDriverManager.firefoxdriver().setup();
-    }
-
-    @BeforeEach
-    void setUp() {
-        FirefoxOptions options = new FirefoxOptions();
-        options.addArguments("--headless");
-        options.addArguments("--no-sandbox");
-        options.addArguments("--disable-dev-shm-usage");
+    @Test
+    void testGetAllRestaurants() {
+        // Get all restaurants - using parameterizedTypeReference for proper type handling
+        ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
+            "http://localhost:" + port + "/api/v1/restaurants", 
+            HttpMethod.GET,
+            null,
+            new ParameterizedTypeReference<List<Map<String, Object>>>() {}
+        );
         
-        driver = new FirefoxDriver(options);
-        wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-    }
-
-    @AfterEach
-    void tearDown() {
-        if (driver != null) {
-            driver.quit();
-        }
+        // Verify we got a successful response
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().size()).isGreaterThan(0);
     }
 
     @Test
-    void testViewRestaurantsAndMeals() {
-        // Open the home page
-        driver.get("http://localhost:" + port);
-        
-        // Verify homepage title
-        assertThat(driver.getTitle()).contains("Meal Booking");
-        
-        // Verify restaurants are loaded (wait for the first restaurant to appear)
-        WebElement firstRestaurant = wait.until(
-            ExpectedConditions.presenceOfElementLocated(By.cssSelector(".restaurant"))
+    void testGetRestaurantDetails() {
+        // First get all restaurants
+        ResponseEntity<List<Map<String, Object>>> allRestaurantsResponse = restTemplate.exchange(
+            "http://localhost:" + port + "/api/v1/restaurants", 
+            HttpMethod.GET,
+            null,
+            new ParameterizedTypeReference<List<Map<String, Object>>>() {}
         );
-        assertThat(firstRestaurant).isNotNull();
         
-        // Verify restaurant has a name and description
-        WebElement restaurantName = firstRestaurant.findElement(By.cssSelector("h3"));
-        WebElement restaurantDescription = firstRestaurant.findElement(By.cssSelector("p.description"));
+        // Get the ID of the first restaurant
+        List<Map<String, Object>> restaurants = allRestaurantsResponse.getBody();
+        assertThat(restaurants).isNotEmpty();
         
-        assertThat(restaurantName.getText()).isNotBlank();
-        assertThat(restaurantDescription.getText()).isNotBlank();
+        Integer restaurantId = ((Number) restaurants.get(0).get("id")).intValue();
+        
+        // Get the restaurant details
+        ResponseEntity<Map<String, Object>> restaurantResponse = restTemplate.exchange(
+            "http://localhost:" + port + "/api/v1/restaurants/" + restaurantId, 
+            HttpMethod.GET,
+            null,
+            new ParameterizedTypeReference<Map<String, Object>>() {}
+        );
+        
+        // Verify we got a successful response
+        assertThat(restaurantResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(restaurantResponse.getBody()).isNotNull();
+        assertThat(restaurantResponse.getBody().get("name")).isNotNull();
+        
+        // Get meals for the restaurant - use the correct meals endpoint
+        ResponseEntity<List<Map<String, Object>>> mealsResponse = restTemplate.exchange(
+            "http://localhost:" + port + "/api/v1/meals?restaurantId=" + restaurantId, 
+            HttpMethod.GET,
+            null,
+            new ParameterizedTypeReference<List<Map<String, Object>>>() {}
+        );
+        
+        // Verify we got meals
+        assertThat(mealsResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(mealsResponse.getBody()).isNotEmpty();
     }
 
     @Test
-    void testNavigateToRestaurantDetails() {
-        // Open the home page
-        driver.get("http://localhost:" + port);
-        
-        // Wait for restaurants to load
-        WebElement firstRestaurant = wait.until(
-            ExpectedConditions.presenceOfElementLocated(By.cssSelector(".restaurant"))
+    void testCreateAndCheckReservation() {
+        // First get all restaurants
+        ResponseEntity<List<Map<String, Object>>> allRestaurantsResponse = restTemplate.exchange(
+            "http://localhost:" + port + "/api/v1/restaurants", 
+            HttpMethod.GET,
+            null,
+            new ParameterizedTypeReference<List<Map<String, Object>>>() {}
         );
         
-        // Click on the first restaurant to view details
-        WebElement viewDetailsButton = firstRestaurant.findElement(By.cssSelector("a.btn-primary"));
-        viewDetailsButton.click();
+        // Get the ID of the first restaurant
+        List<Map<String, Object>> restaurants = allRestaurantsResponse.getBody();
+        Integer restaurantId = ((Number) restaurants.get(0).get("id")).intValue();
         
-        // Verify we're on the restaurant details page
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(".restaurant-header")));
-        
-        // Verify meals are displayed
-        WebElement mealsList = wait.until(
-            ExpectedConditions.presenceOfElementLocated(By.cssSelector(".meals-container"))
+        // Get meals for the restaurant
+        ResponseEntity<List<Map<String, Object>>> mealsResponse = restTemplate.exchange(
+            "http://localhost:" + port + "/api/v1/meals?restaurantId=" + restaurantId, 
+            HttpMethod.GET,
+            null,
+            new ParameterizedTypeReference<List<Map<String, Object>>>() {}
         );
-        assertThat(mealsList).isNotNull();
         
-        // Check if there's at least one meal
-        WebElement firstMeal = mealsList.findElement(By.cssSelector(".meal-card"));
-        assertThat(firstMeal).isNotNull();
+        // Get the ID of the first meal
+        List<Map<String, Object>> meals = mealsResponse.getBody();
+        assertThat(meals).isNotEmpty();
+        
+        Integer mealId = ((Number) meals.get(0).get("id")).intValue();
+        
+        // Create a reservation - use exchange instead of postForEntity for consistency
+        ResponseEntity<Map<String, Object>> reservationResponse = restTemplate.exchange(
+            "http://localhost:" + port + "/api/v1/reservations?mealId=" + mealId,
+            HttpMethod.POST,
+            null, 
+            new ParameterizedTypeReference<Map<String, Object>>() {}
+        );
+        
+        // Verify the reservation was created
+        assertThat(reservationResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(reservationResponse.getBody()).isNotNull();
+        assertThat(reservationResponse.getBody().get("token")).isNotNull();
+        
+        String token = (String) reservationResponse.getBody().get("token");
+        
+        // Check the reservation
+        ResponseEntity<Map<String, Object>> checkResponse = restTemplate.exchange(
+            "http://localhost:" + port + "/api/v1/reservations/" + token,
+            HttpMethod.GET,
+            null,
+            new ParameterizedTypeReference<Map<String, Object>>() {}
+        );
+        
+        // Verify we can retrieve the reservation
+        assertThat(checkResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(checkResponse.getBody().get("token")).isEqualTo(token);
+        assertThat(checkResponse.getBody().get("used")).isEqualTo(false);
     }
 
     @Test
-    void testCreateReservation() {
-        // Open the home page
-        driver.get("http://localhost:" + port);
-        
-        // Wait for restaurants to load and click on the first one
-        WebElement firstRestaurant = wait.until(
-            ExpectedConditions.presenceOfElementLocated(By.cssSelector(".restaurant"))
-        );
-        firstRestaurant.findElement(By.cssSelector("a.btn-primary")).click();
-        
-        // On the restaurant details page, wait for meals to load
-        WebElement firstMeal = wait.until(
-            ExpectedConditions.presenceOfElementLocated(By.cssSelector(".meal-card"))
+    void testUseReservation() {
+        // First get all restaurants
+        ResponseEntity<List<Map<String, Object>>> allRestaurantsResponse = restTemplate.exchange(
+            "http://localhost:" + port + "/api/v1/restaurants", 
+            HttpMethod.GET,
+            null,
+            new ParameterizedTypeReference<List<Map<String, Object>>>() {}
         );
         
-        // Click the "Book Now" button on the first meal
-        WebElement bookButton = firstMeal.findElement(By.cssSelector(".btn-book"));
-        bookButton.click();
+        // Get the ID of the first restaurant
+        List<Map<String, Object>> restaurants = allRestaurantsResponse.getBody();
+        Integer restaurantId = ((Number) restaurants.get(0).get("id")).intValue();
         
-        // Wait for the reservation confirmation
-        WebElement reservationConfirmation = wait.until(
-            ExpectedConditions.presenceOfElementLocated(By.cssSelector(".reservation-success"))
+        // Get meals for the restaurant
+        ResponseEntity<List<Map<String, Object>>> mealsResponse = restTemplate.exchange(
+            "http://localhost:" + port + "/api/v1/meals?restaurantId=" + restaurantId, 
+            HttpMethod.GET,
+            null,
+            new ParameterizedTypeReference<List<Map<String, Object>>>() {}
         );
-        assertThat(reservationConfirmation).isNotNull();
         
-        // Verify the reservation token is displayed
-        WebElement reservationToken = reservationConfirmation.findElement(By.cssSelector(".token"));
-        assertThat(reservationToken.getText()).isNotBlank();
+        // Get the ID of the first meal
+        List<Map<String, Object>> meals = mealsResponse.getBody();
+        assertThat(meals).isNotEmpty();
+        
+        Integer mealId = ((Number) meals.get(0).get("id")).intValue();
+        
+        // Create a reservation - use exchange instead of postForEntity
+        ResponseEntity<Map<String, Object>> reservationResponse = restTemplate.exchange(
+            "http://localhost:" + port + "/api/v1/reservations?mealId=" + mealId,
+            HttpMethod.POST,
+            null, 
+            new ParameterizedTypeReference<Map<String, Object>>() {}
+        );
+        
+        String token = (String) reservationResponse.getBody().get("token");
+        
+        // Mark reservation as used
+        ResponseEntity<Map<String, Object>> useResponse = restTemplate.exchange(
+            "http://localhost:" + port + "/api/v1/reservations/" + token + "/use",
+            HttpMethod.PUT,
+            null,
+            new ParameterizedTypeReference<Map<String, Object>>() {}
+        );
+        
+        // Verify the reservation was marked as used
+        assertThat(useResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(useResponse.getBody().get("used")).isEqualTo(true);
     }
 } 

@@ -1,5 +1,12 @@
 package pt.ua.deti.tqs.meal.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +23,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/reservations")
 @CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5173"})
+@Tag(name = "Reservation", description = "Reservation management APIs")
 public class ReservationController {
     private static final Logger logger = LoggerFactory.getLogger(ReservationController.class);
     
@@ -27,8 +35,16 @@ public class ReservationController {
      * @param mealId The meal ID to reserve
      * @return The created reservation details
      */
+    @Operation(summary = "Create a new reservation", description = "Creates a new reservation for the specified meal")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Reservation created successfully",
+                content = @Content(schema = @Schema(implementation = ReservationDto.class))),
+        @ApiResponse(responseCode = "404", description = "Meal not found"),
+        @ApiResponse(responseCode = "400", description = "Error creating reservation")
+    })
     @PostMapping
-    public ResponseEntity<?> createReservation(@RequestParam Long mealId) {
+    public ResponseEntity<?> createReservation(
+            @Parameter(description = "ID of the meal to reserve") @RequestParam Long mealId) {
         logger.info("Request to create reservation for meal ID: {}", mealId);
         
         try {
@@ -46,8 +62,15 @@ public class ReservationController {
      * @param token The reservation token
      * @return Reservation details if found
      */
+    @Operation(summary = "Get reservation by token", description = "Returns reservation details for the specified token")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Reservation found",
+                content = @Content(schema = @Schema(implementation = ReservationDto.class))),
+        @ApiResponse(responseCode = "404", description = "Reservation not found")
+    })
     @GetMapping("/{token}")
-    public ResponseEntity<?> getReservation(@PathVariable String token) {
+    public ResponseEntity<?> getReservation(
+            @Parameter(description = "Token of the reservation") @PathVariable String token) {
         logger.info("Request to get reservation with token: {}", token);
         
         try {
@@ -63,8 +86,15 @@ public class ReservationController {
      * @param code The reservation code
      * @return Reservation details if found
      */
+    @Operation(summary = "Find reservation by code", description = "Returns reservation details for the specified code (for staff use)")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Reservation found",
+                content = @Content(schema = @Schema(implementation = ReservationDto.class))),
+        @ApiResponse(responseCode = "404", description = "Reservation not found")
+    })
     @GetMapping("/code/{code}")
-    public ResponseEntity<?> findReservationByCode(@PathVariable String code) {
+    public ResponseEntity<?> findReservationByCode(
+            @Parameter(description = "Code of the reservation") @PathVariable String code) {
         logger.info("Request to find reservation with code: {}", code);
         
         try {
@@ -80,8 +110,16 @@ public class ReservationController {
      * @param token The reservation token
      * @return Updated reservation details
      */
+    @Operation(summary = "Mark reservation as used", description = "Marks a reservation as used (check-in) by token")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Reservation marked as used",
+                content = @Content(schema = @Schema(implementation = ReservationDto.class))),
+        @ApiResponse(responseCode = "404", description = "Reservation not found"),
+        @ApiResponse(responseCode = "400", description = "Reservation already used")
+    })
     @PutMapping("/{token}/use")
-    public ResponseEntity<?> useReservation(@PathVariable String token) {
+    public ResponseEntity<?> useReservation(
+            @Parameter(description = "Token of the reservation") @PathVariable String token) {
         logger.info("Request to mark reservation with token {} as used", token);
         
         try {
@@ -100,8 +138,16 @@ public class ReservationController {
      * @param code The reservation code
      * @return Updated reservation details
      */
+    @Operation(summary = "Mark reservation as used by code", description = "Marks a reservation as used (check-in) by code (for staff use)")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Reservation marked as used",
+                content = @Content(schema = @Schema(implementation = ReservationDto.class))),
+        @ApiResponse(responseCode = "404", description = "Reservation not found"),
+        @ApiResponse(responseCode = "400", description = "Reservation already used")
+    })
     @PutMapping("/code/{code}/use")
-    public ResponseEntity<?> useReservationByCode(@PathVariable String code) {
+    public ResponseEntity<?> useReservationByCode(
+            @Parameter(description = "Code of the reservation") @PathVariable String code) {
         logger.info("Request to mark reservation with code {} as used", code);
         
         try {
@@ -119,8 +165,15 @@ public class ReservationController {
      * @param token The reservation token
      * @return 200 OK if successful, 400 Bad Request if not found or already used
      */
+    @Operation(summary = "Cancel reservation", description = "Cancels (deletes) a reservation by token")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Reservation successfully cancelled"),
+        @ApiResponse(responseCode = "404", description = "Reservation not found"),
+        @ApiResponse(responseCode = "400", description = "Reservation already used")
+    })
     @DeleteMapping("/{token}")
-    public ResponseEntity<?> cancelReservation(@PathVariable String token) {
+    public ResponseEntity<?> cancelReservation(
+            @Parameter(description = "Token of the reservation") @PathVariable String token) {
         logger.info("Request to cancel reservation with token: {}", token);
         
         try {
