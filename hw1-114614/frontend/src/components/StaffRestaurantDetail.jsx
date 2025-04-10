@@ -208,43 +208,6 @@ export default function StaffRestaurantDetail() {
           )}
         </div>
       </div>
-
-      {/* Active Reservations */}
-      <h2 className="text-xl font-bold mb-4 text-center">Active Reservations</h2>
-      {reservations.length === 0 ? (
-        <div className="alert">No active reservations found</div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {reservations.map(reservation => (
-            <div key={reservation.id} className="card bg-base-100 shadow-xl">
-              <div className="card-body">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold font-mono">
-                    {reservation.reservationCode}
-                  </h3>
-                  <span className={`badge ${reservation.status === "USED" ? "badge-secondary" : "badge-primary"}`}>
-                    {reservation.status}
-                  </span>
-                </div>
-                <div className="mt-2">
-                  <p className="text-sm">{reservation.mealName}</p>
-                  <p className="text-sm">Time: {reservation.time}</p>
-                </div>
-                
-                <div className="card-actions justify-end mt-6">
-                  <button 
-                    className="btn btn-primary w-full"
-                    onClick={() => handleUseReservation(reservation.reservationCode)}
-                    disabled={reservation.status === "USED"}
-                  >
-                    {reservation.status === "USED" ? "Completed" : "Mark as Completed"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 } 
