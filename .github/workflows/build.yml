@@ -34,4 +34,5 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=martimsantos31_TQS_114614
-        working-directory: ./hw-114614/meal
+        working-directory: ./hw-114614
+
